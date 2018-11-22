@@ -12,7 +12,7 @@ import os, sys, string, time, datetime, gmpy, uspp, pygame
 
 class SharkMonitor:
 	def __init__(self):
-		self.ser = uspp.SerialPort("/dev/ttyS1", 1000, 38400)
+		self.ser = uspp.SerialPort("/dev/ttyUSB0", 1000, 38400)
 
 	# Read bytes until we get the End-of-Transmission byte (0x0F)
 	def ReceiveMessage(self):
@@ -125,13 +125,17 @@ MyMonitor = SharkMonitor()
 
 starttime=time.time()
 while True:
-	messagebytes=MyMonitor.ReceiveMessage()
-	MessageType=MyMonitor.DecodeMessage(messagebytes)
-	if MessageType == 5: # If we see an SPM power-up message, we should transmit our own SACU power-up message
-		MyMonitor.SendMessage(9, chr(0x8a)+chr(0x89)+chr(0xDE)+chr(0xAD)+chr(0xC5)+chr(0xA5)+chr(0x82))
-	if MessageType == 1: # If we see an SPM General Information Message, we should transmit our own SACU General Information message
-		if time.time()-starttime < 10:
-			MyMonitor.SendMessage(8, chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
-		else:
-			MyMonitor.SendMessage(8, chr(0xFF)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
+	if time.time()-starttime < 10:
+		MyMonitor.SendMessage(8, chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
+	else:
+		MyMonitor.SendMessage(8, chr(0xFF)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
+	# messagebytes=MyMonitor.ReceiveMessage()
+	# MessageType=MyMonitor.DecodeMessage(messagebytes)
+	# if MessageType == 5: # If we see an SPM power-up message, we should transmit our own SACU power-up message
+	# 	MyMonitor.SendMessage(9, chr(0x8a)+chr(0x89)+chr(0xDE)+chr(0xAD)+chr(0xC5)+chr(0xA5)+chr(0x82))
+	# if MessageType == 1: # If we see an SPM General Information Message, we should transmit our own SACU General Information message
+	# 	if time.time()-starttime < 10:
+	# 		MyMonitor.SendMessage(8, chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
+	# 	else:
+	# 		MyMonitor.SendMessage(8, chr(0xFF)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
 
