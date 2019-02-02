@@ -3,7 +3,7 @@
 import serial, sys, string, datetime
 
 ser = serial.Serial()                                                 
-ser.port     = "/dev/ttyS1"                                                  
+ser.port     = "/dev/ttyUSB0"                                                  
 ser.baudrate = "38400"                                              
 ser.parity   = "N"                                        
 ser.rtscts   = "off"                                        

@@ -13,9 +13,11 @@ import os, sys, string, time, datetime, gmpy, uspp, pygame
 class SharkMonitor:
 	def __init__(self):
 		self.ser = uspp.SerialPort("/dev/ttyUSB0", 1000, 38400)
+		self._msg = None
 
 	# Read bytes until we get the End-of-Transmission byte (0x0F)
 	def ReceiveMessage(self):
+		msg = []
 		messagebytes = ""
 		lasthexvalue = "00"
 		while lasthexvalue != "0F":
@@ -23,12 +25,15 @@ class SharkMonitor:
 				data = self.ser.read(1)
 			#if data:
 				hexvalue = "%02X"%ord(data)
-				#if lasthexvalue == "0F" : # 0x0F is the End of Transmission byte.
-				#	print
-				#	print datetime.datetime.now(),
-				#print hexvalue,
+				# if lasthexvalue == "0F" : # 0x0F is the End of Transmission byte.
+				# 	print
+				# 	print datetime.datetime.now(),
+				# print hexvalue,
+				msg.append(hexvalue)
 				messagebytes = messagebytes + data
 				lasthexvalue = hexvalue
+ 
+		self._msg = msg
 		return(messagebytes)
 
 	# Send a message, terminated with parity byte and the End-of-Transmission byte (0x0F)
@@ -49,12 +54,9 @@ class SharkMonitor:
 
 	# Decode messages into human readable form.
 	def DecodeMessage(self,message):
-		print "Received at:", datetime.datetime.now()
+		print "Received at:", datetime.datetime.now(), self._msg
 		for data in message:
 			hexvalue = "%02X"%ord(data)
-			print hexvalue,
-		print
-	
 		if ord(message[0]) == 0:
 			print "Framing/Power-on startup message - Chomp"
 			message = message[1:]
@@ -63,19 +65,29 @@ class SharkMonitor:
 			print "Not at message start"
 			return(0)
 		messagetype=(ord(message[0]) & 0x0F)
-		#if messagetype == 0 : # Shark Remote General Information (Joytstick Data)
-		#	joy_speed = ((ord(message[1]) & 127)<<3)+((ord(message[4]) & 56)>>3)
-		#	joy_dir = ((ord(message[2]) & 127)<<3)+(ord(message[4]) & 7)
-		#	speed_pot = ((ord(message[3]) & 127)<<1)+((ord(message[4]) & 64)>>6)
-		#	print "Y:", joy_speed, "X:", joy_dir, "Speed:", speed_pot,
+
+		# print self._msg
+		# raw_input()
+
+		# if messagetype == 0 : # Shark Remote General Information (Joytstick Data)
+		# 	joy_speed = ((ord(message[1]) & 127)<<3)+((ord(message[4]) & 56)>>3)
+		# 	joy_dir = ((ord(message[2]) & 127)<<3)+(ord(message[4]) & 7)
+		# 	speed_pot = ((ord(message[3]) & 127)<<1)+((ord(message[4]) & 64)>>6)
+		# 	print "\n\n\n\n\n"
+		# 	print "Type:",0, "Y:", joy_speed, "X:", joy_dir, "Speed:", speed_pot
+		# 	print "Message \t", self._msg
+		# 	print "\n\n\n\n\n"
 
 
-		#if messagetype == 1 : # Shark Power Module General Information
-		#	fuel_guage = ord(message[1]) & 31
-		#	horn = ord(message[3]) & 1
-		#	driving_mode = ord(message[6]) & 15
-		#	speedo = ord(message[7]) & 31
-		#	print "Batt:", fuel_guage, "Horn:", horn, "Mode:", driving_mode, "Speedo:", speedo
+		if messagetype == 1 : # Shark Power Module General Information
+			fuel_guage = ord(message[1]) & 31
+			horn = ord(message[3]) & 1
+			driving_mode = ord(message[6]) & 15
+			speedo = ord(message[7]) & 31
+			print "\n\n\n\n\n"
+			print "Type:", 1, "Batt:", fuel_guage, "Horn:", horn, "Mode:", driving_mode, "Speedo:", speedo
+			print "Message \t", self._msg
+			print "\n\n\n\n\n"
 
 		if messagetype == 2 : # SR HHP Data
 			print "SR HHP Data"
@@ -125,14 +137,54 @@ MyMonitor = SharkMonitor()
 
 starttime=time.time()
 while True:
-	if time.time()-starttime < 10:
-		MyMonitor.SendMessage(8, chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
-	else:
-		MyMonitor.SendMessage(8, chr(0xFF)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
-	# messagebytes=MyMonitor.ReceiveMessage()
-	# MessageType=MyMonitor.DecodeMessage(messagebytes)
+	# print "dafad"
+
+	#60 80 B0 80 84 80 84 81 E6 0F
+
+	# if time.time()-starttime < 10:
+	# 	MyMonitor.SendMessage(10, chr(0x60)+chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x80)+chr(0x8C)+chr(0x80)+chr(0xD4)+chr(0x0F) )
+	# else:
+	# 	MyMonitor.SendMessage(10, chr(0x60)+chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x80)+chr(0x8C)+chr(0x80)+chr(0xD4)+chr(0x0F) )
+	# 	MyMonitor.SendMessage(8, chr(0xFF)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80) )
+	
+	# MyMonitor.SendMessage(11, chr(0x74)+chr(0x82)+chr(0x86)+chr(0x8B)+chr(0x80)+chr(0xA5)+chr(0xCA)+chr(0xA5)+chr(0x83)+chr(0xE1)+chr(0x0F))
+
+
+	messagebytes=MyMonitor.ReceiveMessage()
+	MessageType=MyMonitor.DecodeMessage(messagebytes)
+
+	"""
+		Type: 0 Y: 0 X: 450 Speed: 0
+		Message 	['60', '80', 'B8', '80', '82', '80', '84', '81', 'E0', '0F']
+
+		Type: 1 Batt: 18 Horn: 0 Mode: 1 Speedo: 0
+		Message 	['61', 'B2', '89', 'C0', 'A0', '80', '81', '80', '82', '0F']
+		             '74', '82', '86', '8B', '80', 'A5', 'CA', 'A5', '83', 'E1', '0F'
+	"""
+	# if MessageType == 1:
+	# 	if time.time()-starttime < 10:
+	# 		MyMonitor.SendMessage(10, chr(0x60)+chr(0x80)+chr(0xB8)+chr(0x80)+chr(0x82)+chr(0x80)+chr(0x84)+chr(0x81)+chr(0xE0)+chr(0x0F))
+	# 	else:
+	# 		MyMonitor.SendMessage(8, chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
+
+	
+	# print "he"
+
+	# print "messagebytes \t", messagebytes
+	# print "MessageType \t", MessageType
+
+	# if MessageType == 1:
+	# 	if time.time()-starttime < 10:
+	# 		MyMonitor.SendMessage(8, chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
+	# 	else:
+	# 		MyMonitor.SendMessage(8, chr(0xFF)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
+		
+
+
+
 	# if MessageType == 5: # If we see an SPM power-up message, we should transmit our own SACU power-up message
 	# 	MyMonitor.SendMessage(9, chr(0x8a)+chr(0x89)+chr(0xDE)+chr(0xAD)+chr(0xC5)+chr(0xA5)+chr(0x82))
+	# 	print "Hello"
 	# if MessageType == 1: # If we see an SPM General Information Message, we should transmit our own SACU General Information message
 	# 	if time.time()-starttime < 10:
 	# 		MyMonitor.SendMessage(8, chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80))
