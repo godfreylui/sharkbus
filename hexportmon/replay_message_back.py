@@ -1,6 +1,5 @@
 import  uspp
 import numpy as np
-import pandas as pd
 import cPickle as pickle
 # import matplotlib.pyplot as plt
 from sharkmon import SharkMonitor
@@ -11,23 +10,25 @@ shm = SharkMonitor(ser=None)
 
 def get_times():
 
-    df = pd.read_csv('../data/log1.txt')
+    data = open('../data/log1.txt','r')
 
     log_time = []
 
     idx = 0
 
     while True:
-        try:
-            log_time.append(float(df.iloc[idx,0].split(':')[-1].split('[')[0]))
-            idx += 1
-        except Exception as e:
-            print "I am done"
+
+        line = data.readline()
+
+        if len(line) == 0:
             break
+
+        log_time.append(float(line.split(':')[-1].split('[')[0]))
 
     log_time = np.asarray(log_time)
 
-    log_time_step = np.diff(log_time)*1e6
+    #the first delta t is zero
+    log_time_step = np.hstack([0.0, np.diff(log_time)*1e6])
 
     return log_time_step
 
@@ -74,12 +75,15 @@ def get_messages():
 
     return shm_msgs
 
-    
+
 def main():
 
-    log_time_step =  get_times()
+    log_time_steps =  get_times()
 
     shm_msgs = get_messages()
+
+    print "length of log_time_steps \t", len(log_time_steps)
+    print "length of shm_msgs \t", len(shm_msgs)
     
 
 
