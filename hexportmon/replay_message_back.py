@@ -1,15 +1,12 @@
 import  uspp
 import copy
+import time
 import numpy as np
 import cPickle as pickle
-import matplotlib
-matplotlib.use("TkAgg")
+from datetime import datetime
 import matplotlib.pyplot as plt
 from sharkmon import SharkMonitor
 
-# ser= uspp.SerialPort("/dev/ttyUSB0", 1000, 38400)
-
-shm = SharkMonitor(ser=None)
 
 def get_times():
 
@@ -36,15 +33,14 @@ def get_times():
     log_time_step_bkup = copy.deepcopy(log_time_step)
 
     for i, delta_t in enumerate(log_time_step):
-        if 15000 < delta_t < 16000:
+        if 15000 < delta_t < 16200:
             log_time_step[i] = 15900
         if 50 < delta_t < 100:
             log_time_step[i] = 70
 
-    plt.plot(log_time_step, 'r')
-    plt.plot(log_time_step_bkup, 'g')
-    plt.show()
-    raw_input()
+    # plt.plot(log_time_step, 'r')
+    # plt.plot(log_time_step_bkup, 'g')
+    # plt.show()
 
     return log_time_step
 
@@ -74,7 +70,6 @@ def get_messages():
         for k in range(1, len(char_string_message)):
             combined_message += char_string_message[k]
 
-        
         msg_type = ord(char_string_message[0])%16
 
         # shm_msg = shm.SendMessage(message_type=msg_type, message=combined_message)
@@ -102,15 +97,28 @@ def get_messages():
 
 def main():
 
+    shm = SharkMonitor(ser=None)#uspp.SerialPort("/dev/ttyUSB0", 1000, 38400))
+
     log_time_steps =  get_times()
-    print log_time_steps
     msg_types, shm_msgs = get_messages()
 
-    # print "length of log_time_steps \t", len(log_time_steps)
-    # print "length of shm_msgs \t", len(shm_msgs)
-    
-    # print msg_types
-    # print shm_msgs
+    time0 = datetime.now().microsecond 
+    # time0_ =  time0.second*1e6 + time0.microsecond 
+
+    for i, (dt, msg_type, shm_msg) in enumerate(zip(log_time_steps, msg_types, shm_msgs)):
+
+        while True:
+            time1 = datetime.now().microsecond 
+            # time1_ = time0.second*1e6 + time0.microsecond 
+            sent_dt = time1 - time0
+            if sent_dt >= dt:
+                time0 = time1
+                break
+
+        shm.SendMessage(message_type=msg_type, message=shm_msg)
+
+        print "Sent message \t", i, "original dt", dt, "send dt", sent_dt
+
 
 if __name__ == '__main__':
     main()
