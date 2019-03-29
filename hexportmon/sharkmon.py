@@ -11,8 +11,8 @@
 import os, sys, string, time, datetime, gmpy, uspp, pygame
 
 class SharkMonitor:
-	def __init__(self):
-		self.ser = uspp.SerialPort("/dev/ttyUSB0", 1000, 38400)
+	def __init__(self, ser=None):
+		self.ser = ser#uspp.SerialPort("/dev/ttyUSB0", 1000, 38400)
 		self._msg = None
 
 	# Read bytes until we get the End-of-Transmission byte (0x0F)
@@ -49,9 +49,12 @@ class SharkMonitor:
 		message = message + parity_byte # Add the parity on to the end
 		message = message + chr(15) # Add the EoT byte to the end.
 		print "Sending Message at", datetime.datetime.now()
-		self.ser.write(message)
-		return()
-
+		if self.ser is not None:
+			self.ser.write(message)
+			return()
+		else:
+			return message
+		
 	# Decode messages into human readable form.
 	def DecodeMessage(self,message):
 		print "Received at:", datetime.datetime.now(), self._msg
@@ -133,25 +136,25 @@ class SharkMonitor:
 		return(messagetype)
 
 
-MyMonitor = SharkMonitor()
+# MyMonitor = SharkMonitor()
 
-starttime=time.time()
-while True:
-	# print "dafad"
+# starttime=time.time()
+# while True:
+# 	# print "dafad"
 
-	#60 80 B0 80 84 80 84 81 E6 0F
+# 	#60 80 B0 80 84 80 84 81 E6 0F
 
-	# if time.time()-starttime < 10:
-	# 	MyMonitor.SendMessage(10, chr(0x60)+chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x80)+chr(0x8C)+chr(0x80)+chr(0xD4)+chr(0x0F) )
-	# else:
-	# 	MyMonitor.SendMessage(10, chr(0x60)+chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x80)+chr(0x8C)+chr(0x80)+chr(0xD4)+chr(0x0F) )
-	# 	MyMonitor.SendMessage(8, chr(0xFF)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80) )
+# 	# if time.time()-starttime < 10:
+# 	# 	MyMonitor.SendMessage(10, chr(0x60)+chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x80)+chr(0x8C)+chr(0x80)+chr(0xD4)+chr(0x0F) )
+# 	# else:
+# 	# 	MyMonitor.SendMessage(10, chr(0x60)+chr(0xC0)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x80)+chr(0x8C)+chr(0x80)+chr(0xD4)+chr(0x0F) )
+# 	# 	MyMonitor.SendMessage(8, chr(0xFF)+chr(0xC0)+chr(0xFF)+chr(0xC0)+chr(0x84)+chr(0x80) )
 	
-	# MyMonitor.SendMessage(11, chr(0x74)+chr(0x82)+chr(0x86)+chr(0x8B)+chr(0x80)+chr(0xA5)+chr(0xCA)+chr(0xA5)+chr(0x83)+chr(0xE1)+chr(0x0F))
+# 	# MyMonitor.SendMessage(11, chr(0x74)+chr(0x82)+chr(0x86)+chr(0x8B)+chr(0x80)+chr(0xA5)+chr(0xCA)+chr(0xA5)+chr(0x83)+chr(0xE1)+chr(0x0F))
 
 
-	messagebytes=MyMonitor.ReceiveMessage()
-	MessageType=MyMonitor.DecodeMessage(messagebytes)
+# 	messagebytes=MyMonitor.ReceiveMessage()
+# 	MessageType=MyMonitor.DecodeMessage(messagebytes)
 
 	"""
 		Type: 0 Y: 0 X: 450 Speed: 0
