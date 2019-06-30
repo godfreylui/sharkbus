@@ -1,16 +1,16 @@
-import  uspp
+import uspp
 import copy
 import time
 import numpy as np
 import cPickle as pickle
 from datetime import datetime
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from sharkmon import SharkMonitor
 
 
 def get_times():
 
-    data = open('../data/log1.txt','r')
+    data = open('../data/for1.txt','r')
 
     log_time = []
 
@@ -34,9 +34,9 @@ def get_times():
 
     for i, delta_t in enumerate(log_time_step):
         if 15000 < delta_t < 16200:
-            log_time_step[i] = 15900
+            log_time_step[i] = 16000
         if 50 < delta_t < 100:
-            log_time_step[i] = 70
+            log_time_step[i] = 50
 
     # plt.plot(log_time_step, 'r')
     # plt.plot(log_time_step_bkup, 'g')
@@ -47,10 +47,12 @@ def get_times():
 
 def get_messages():
 
-    data = open('../data/log1.txt','r')
+    data = open('../data/for1.txt','r')
 
     shm_msgs = []
     msg_types = []
+    ori_msgs = []
+    hex_msgs = []
 
     while True:
 
@@ -92,33 +94,47 @@ def get_messages():
 
         shm_msgs.append(combined_message)
         msg_types.append(msg_type)
-    return msg_types, shm_msgs
+        ori_msgs.append(msg)
+        hex_msgs.append(hex_string_message)
 
+    return msg_types, shm_msgs, ori_msgs, hex_msgs
+
+
+# def left():
+
+#     data = open('../data/left.txt')
 
 def main():
 
-    shm = SharkMonitor(ser=None)#uspp.SerialPort("/dev/ttyUSB0", 1000, 38400))
+    shm = SharkMonitor(ser=uspp.SerialPort("/dev/ttyUSB0", 1000, 38400))
 
     log_time_steps =  get_times()
-    msg_types, shm_msgs = get_messages()
+    msg_types, shm_msgs, ori_msgs, hex_msgs = get_messages()
 
-    time0 = datetime.now().microsecond 
-    # time0_ =  time0.second*1e6 + time0.microsecond 
+    time0 = datetime.now() 
 
-    for i, (dt, msg_type, shm_msg) in enumerate(zip(log_time_steps, msg_types, shm_msgs)):
+
+    for i, (dt, msg_type, shm_msg, ori_msg) in enumerate(zip(log_time_steps, msg_types, shm_msgs, ori_msgs)):
 
         while True:
-            time1 = datetime.now().microsecond 
-            # time1_ = time0.second*1e6 + time0.microsecond 
+            time1 = datetime.now() 
             sent_dt = time1 - time0
-            if sent_dt >= dt:
+            if sent_dt.microseconds >= dt:
                 time0 = time1
                 break
 
-        shm.SendMessage(message_type=msg_type, message=shm_msg)
+        shm_msg_to_be_send = shm.SendMessage(message_type=msg_type, message=shm_msg)
+        # print hex_msgs[i]
+        # print "sent_dt at:", datetime.now(), shm_msg_to_be_send
+        # shm_decode_msg = shm.DecodeMessage(shm_msg_to_be_send)
 
-        print "Sent message \t", i, "original dt", dt, "send dt", sent_dt
+        # print "ori \n", ori_msg
+        # print "shm \n", shm_decode_msg
+        # raw_input()
+
+        # print "Sent message \t", i, "original dt", dt, "send dt", sent_dt
 
 
 if __name__ == '__main__':
+
     main()

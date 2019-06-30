@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-df = pd.read_csv('log.txt')
+df = pd.read_csv('received.txt',header=None)
 
 log_time = []
 
@@ -16,7 +16,12 @@ while True:
 
 log_time = np.asarray(log_time)
 log_time_step = np.diff(log_time)*1e6
-print min(log_time_step), max(log_time_step)
+# print log_time
+print log_time_step
+# print min(log_time_step), max(log_time_step)
+
+plt.plot(np.linspace(0, len(log_time_step), len(log_time_step)), log_time_step)
+plt.show()
 
 
 """

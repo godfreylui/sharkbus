@@ -36,18 +36,18 @@ class SharkMonitor:
 		self._msg = msg
 		return(messagebytes)
 
-	# Send a message, terminated with parity byte and the End-of-Transmission byte (0x0F)
+	# Send a message, terminated with checksum byte and the End-of-Transmission byte (0x0F)
 	def SendMessage(self, message_type, message):
-		message_length = len(message)-1 # The start byte contains the message length (00 = 1byte) and message_type
-		start_byte = chr((message_length << 4)+message_type)
-		message = start_byte + message
-		parity = 0
+		# message_length = len(message)-1 # The start byte contains the message length (00 = 1byte) and message_type
+		# start_byte = chr((message_length << 4)+message_type)
+		# message = start_byte + message
+		checksum = 0
 		for data in message:
-			parity=parity+(ord(data)&127)
-		parity = (255-(parity & 127))
-		parity_byte = chr(parity)
-		message = message + parity_byte # Add the parity on to the end
-		message = message + chr(15) # Add the EoT byte to the end.
+			checksum=checksum+(ord(data)&127)
+		checksum = (255-(checksum & 127))
+		checksum_byte = chr(checksum)
+		message = message + checksum_byte # Add the checksum on to the end
+		message = message + chr(0x0F) # Add the EoT byte to the end.
 		print "Sending Message at", datetime.datetime.now()
 		if self.ser is not None:
 			self.ser.write(message)
@@ -72,14 +72,14 @@ class SharkMonitor:
 		# print self._msg
 		# raw_input()
 
-		# if messagetype == 0 : # Shark Remote General Information (Joytstick Data)
-		# 	joy_speed = ((ord(message[1]) & 127)<<3)+((ord(message[4]) & 56)>>3)
-		# 	joy_dir = ((ord(message[2]) & 127)<<3)+(ord(message[4]) & 7)
-		# 	speed_pot = ((ord(message[3]) & 127)<<1)+((ord(message[4]) & 64)>>6)
-		# 	print "\n\n\n\n\n"
-		# 	print "Type:",0, "Y:", joy_speed, "X:", joy_dir, "Speed:", speed_pot
-		# 	print "Message \t", self._msg
-		# 	print "\n\n\n\n\n"
+		if messagetype == 0 : # Shark Remote General Information (Joytstick Data)
+			joy_speed = ((ord(message[1]) & 127)<<3)+((ord(message[4]) & 56)>>3)
+			joy_dir = ((ord(message[2]) & 127)<<3)+(ord(message[4]) & 7)
+			speed_pot = ((ord(message[3]) & 127)<<1)+((ord(message[4]) & 64)>>6)
+			print "\n\n\n\n\n"
+			print "Type:",0, "Y:", joy_speed, "X:", joy_dir, "Speed:", speed_pot
+			print "Message \t", self._msg
+			print "\n\n\n\n\n"
 
 
 		if messagetype == 1 : # Shark Power Module General Information
